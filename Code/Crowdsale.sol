@@ -8,12 +8,22 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5.0/contracts/crowdsale/distribution/RefundablePostDeliveryCrowdsale.sol";
 
 // @TODO: Inherit the crowdsale contracts
-contract PupperCoinSale is {
+contract PupperCoinSale is Crowdsale, MintedCrowdsale, CappedCrowdsale, TimedCrowdsale, RefundablePostDeliveryCrowdsale {
 
     constructor(
         // @TODO: Fill in the constructor parameters!
+        uint rate, // rate in TKNbits
+        address payable wallet, // sale beneficiary
+        PupperCoin token, // the ArcadeToken itself that the ArcadeTokenSale will work with
+        uint goal, // capped amount
+        uint open, // sales opening time
+        uint close // sales ends time
     )
         // @TODO: Pass the constructor parameters to the crowdsale contracts.
+        Crowdsale(rate, wallet, token)
+        CappedCrowdsale(goal)
+        TimedCrowdsale(open, close)
+        RefundableCrowdsale(goal)
         public
     {
         // constructor can stay empty
@@ -27,12 +37,20 @@ contract PupperCoinSaleDeployer {
 
     constructor(
         // @TODO: Fill in the constructor parameters!
+        string memory name,
+        string memory symbol,
+        address payable wallet, // this address will receive all Ether raised by the sale
+        uint goal // capped amount
     )
         public
     {
         // @TODO: create the PupperCoin and keep its address handy
+        PupperCoin token = new PupperCoin(name, symbol, 0);
+        token_address = address(token);
 
         // @TODO: create the PupperCoinSale and tell it about the token, set the goal, and set the open and close times to now and now + 24 weeks.
+        PupperCoinSale pupper_sale = new PupperCoinSale(1, wallet, token, goal, now, now + 24 weeks);
+        token_sale_address = address(pupper_sale);
 
         // make the PupperCoinSale contract a minter, then have the PupperCoinSaleDeployer renounce its minter role
         token.addMinter(token_sale_address);
